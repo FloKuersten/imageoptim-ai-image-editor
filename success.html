@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful - ImageOptim</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @keyframes checkmark {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        .checkmark {
+            animation: checkmark 0.5s ease-in-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navbar -->
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="text-2xl font-bold text-blue-600">ImageOptim</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Success Message -->
+    <div class="max-w-2xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-lg shadow-sm p-8 text-center">
+            <div class="mb-6">
+                <div class="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center checkmark">
+                    <i class="fas fa-check text-2xl text-green-500"></i>
+                </div>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">Payment Successful!</h1>
+            <p class="text-gray-600 mb-8">Thank you for your purchase. Your account has been updated.</p>
+            
+            <div id="subscriptionDetails" class="bg-gray-50 rounded-lg p-6 mb-8">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Purchase Details</h2>
+                <div class="space-y-2 text-left">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Plan:</span>
+                        <span class="text-gray-900 font-medium" id="planType">Pro Subscription</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Amount:</span>
+                        <span class="text-gray-900 font-medium" id="amount">$5.00</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Status:</span>
+                        <span class="text-green-600 font-medium">Active</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <a href="image-editor.html" class="block w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    Start Editing Images
+                </a>
+                <a href="/" class="block w-full px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    Return to Homepage
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const plan = urlParams.get('plan');
+            const amount = urlParams.get('amount');
+
+            // Update purchase details if parameters exist
+            if (plan) {
+                document.getElementById('planType').textContent = plan;
+            }
+            if (amount) {
+                document.getElementById('amount').textContent = `$${amount}`;
+            }
+
+            // Store subscription status in localStorage
+            localStorage.setItem('subscriptionActive', 'true');
+            localStorage.setItem('subscriptionPlan', plan || 'Pro');
+            
+            // If credits were purchased, update credit balance
+            if (plan === 'credits') {
+                const currentCredits = parseInt(localStorage.getItem('credits') || '0');
+                localStorage.setItem('credits', (currentCredits + 10).toString());
+            }
+        });
+    </script>
+</body>
+</html>
