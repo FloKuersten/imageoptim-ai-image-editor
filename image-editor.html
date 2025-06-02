@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Editor - ImageOptim</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.7.1/gsap.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .dropzone {
+            border: 2px dashed #4B5563;
+            transition: all 0.3s ease-in-out;
+        }
+        .dropzone.dragover {
+            border-color: #2563EB;
+            background-color: #EFF6FF;
+        }
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .slider-value {
+            font-size: 14px;
+            color: #6B7280;
+        }
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: #E5E7EB;
+            border-radius: 5px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #2563EB;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.15s ease-in-out;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+        .feature-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .feature-btn:hover {
+            transform: translateY(-1px);
+        }
+        .feature-btn.active {
+            background-color: #EFF6FF;
+            border-color: #2563EB;
+            color: #2563EB;
+        }
+        .loading-spinner {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .modal {
+            transition: opacity 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navbar -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="text-2xl font-bold text-blue-600">ImageOptim</a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="hidden sm:flex items-center space-x-8">
+                        <a href="index.html" class="text-gray-700 hover:text-blue-600 transition-colors">Home</a>
+                        <a href="#" class="text-gray-700 hover:text-blue-600 transition-colors">Help</a>
+                    </div>
+                    <!-- Credits Display -->
+                    <div class="bg-blue-50 px-4 py-2 rounded-lg">
+                        <span class="text-sm text-gray-600">Credits:</span>
+                        <span id="creditBalance" class="ml-1 font-semibold text-blue-600">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Left Column: Upload and Edit -->
+            <div class="space-y-6">
+                <!-- Upload Section -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Upload Image</h2>
+                    <div id="dropzone" class="dropzone rounded-lg p-8 text-center cursor-pointer hover:bg-gray-50 transition-colors">
+                        <div class="space-y-4">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400"></i>
+                            <div>
+                                <p class="text-gray-600 mb-2">Drag and drop your image here or click to browse</p>
+                                <p class="text-sm text-gray-500">Supports: JPG, PNG, WebP (Max: 10MB)</p>
+                            </div>
+                            <input type="file" id="fileInput" class="hidden" accept="image/*">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit Controls -->
+                <div id="editControls" class="bg-white rounded-lg shadow-sm p-6 hidden">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Edit Image</h2>
+                    
+                    <!-- AI Features -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-3">AI Features</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button onclick="showPremiumFeature('background')" class="feature-btn text-left px-4 py-3 border rounded-lg hover:bg-gray-50 flex items-center space-x-2">
+                                <i class="fas fa-magic text-gray-600"></i>
+                                <div>
+                                    <span class="block">Remove Background</span>
+                                    <span class="text-sm text-gray-500">1 credit</span>
+                                </div>
+                            </button>
+                            <button onclick="showPremiumFeature('3d')" class="feature-btn text-left px-4 py-3 border rounded-lg hover:bg-gray-50 flex items-center space-x-2">
+                                <i class="fas fa-cube text-gray-600"></i>
+                                <div>
+                                    <span class="block">3D Effects</span>
+                                    <span class="text-sm text-gray-500">2 credits</span>
+                                </div>
+                            </button>
+                            <button onclick="showPremiumFeature('watermark')" class="feature-btn text-left px-4 py-3 border rounded-lg hover:bg-gray-50 flex items-center space-x-2">
+                                <i class="fas fa-copyright text-gray-600"></i>
+                                <div>
+                                    <span class="block">Add Watermark</span>
+                                    <span class="text-sm text-gray-500">1 credit</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Platform Presets -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Platform Presets</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button onclick="applyPreset('instagram-post')" class="feature-btn text-left px-4 py-3 border rounded-lg hover:bg-gray-50 flex items-center space-x-2">
+                                <i class="fab fa-instagram text-gray-600"></i>
+                                <span>Instagram Post (1:1)</span>
+                            </button>
+                            <button onclick="applyPreset('instagram-story')" class="feature-btn text-left px-4 py-3 border rounded-lg hover:bg-gray-50 flex items-center space-x-2">
+                                <i class="fab fa-instagram text-gray-600"></i>
+                                <span>Story (9:16)</span>
+                            </button>
+                            <button onclick="applyPreset('facebook-post')" class="feature-btn text-left px-4 py-3 border rounded-lg hover:bg-gray-50 flex items-center space-x-2">
+                                <i class="fab fa-facebook text-gray-600"></i>
+                                <span>Facebook (16:9)</span>
+                            </button>
+                            <button onclick="applyPreset('linkedin-post')" class="feature-btn text-left px-4 py-3 border rounded-lg hover:bg-gray-50 flex items-center space-x-2">
+                                <i class="fab fa-linkedin text-gray-600"></i>
+                                <span>LinkedIn (1.91:1)</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Image Adjustments -->
+                    <div class="space-y-6">
+                        <div>
+                            <div class="slider-label mb-2">
+                                <label for="brightness" class="text-sm font-medium text-gray-700">Brightness</label>
+                                <span class="slider-value" id="brightnessValue">100%</span>
+                            </div>
+                            <input type="range" id="brightness" min="0" max="200" value="100">
+                        </div>
+                        <div>
+                            <div class="slider-label mb-2">
+                                <label for="contrast" class="text-sm font-medium text-gray-700">Contrast</label>
+                                <span class="slider-value" id="contrastValue">100%</span>
+                            </div>
+                            <input type="range" id="contrast" min="0" max="200" value="100">
+                        </div>
+                        <div>
+                            <div class="slider-label mb-2">
+                                <label for="saturation" class="text-sm font-medium text-gray-700">Saturation</label>
+                                <span class="slider-value" id="saturationValue">100%</span>
+                            </div>
+                            <input type="range" id="saturation" min="0" max="200" value="100">
+                        </div>
+                    </div>
+
+                    <!-- Reset and Download Buttons -->
+                    <div class="mt-6 grid grid-cols-2 gap-4">
+                        <button onclick="resetAdjustments()" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                            Reset
+                        </button>
+                        <button id="downloadBtn" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            Download
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Preview -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Preview</h2>
+                <div id="previewContainer" class="relative aspect-square bg-gray-100 rounded-lg overflow-hidden">
+                    <img id="preview" class="hidden max-w-full h-auto" alt="Preview">
+                    <div id="previewPlaceholder" class="flex items-center justify-center h-full text-gray-400">
+                        <p>Upload an image to see preview</p>
+                    </div>
+                    <!-- Loading Overlay -->
+                    <div id="loadingOverlay" class="hidden absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                        <div class="text-white text-center">
+                            <i class="fas fa-spinner loading-spinner text-3xl mb-2"></i>
+                            <p>Processing...</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="dimensions" class="mt-4 text-sm text-gray-500 text-center hidden">
+                    Original dimensions: <span id="originalDimensions"></span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Premium Feature Modal -->
+    <div id="premiumFeatureModal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4">
+            <div id="insufficientCredits" class="text-center">
+                <i class="fas fa-lock text-4xl text-blue-600 mb-4"></i>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">Premium Feature</h3>
+                <p class="text-gray-600 mb-6">You need more credits to use this feature.</p>
+                <div class="space-y-4">
+                    <button onclick="showBuyCredits()" class="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        Buy Credits
+                    </button>
+                    <button onclick="hidePremiumFeatureModal()" class="w-full px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Buy Credits Modal -->
+    <div id="buyCreditsModal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4">
+            <h3 class="text-2xl font-bold text-gray-900 mb-4">Buy Credits</h3>
+            <div class="space-y-6 mb-8">
+                <div class="border rounded-lg p-4 cursor-pointer hover:border-blue-600 transition-colors">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h4 class="font-semibold text-gray-900">10 Credits</h4>
+                            <p class="text-gray-600">Perfect for occasional use</p>
+                        </div>
+                        <span class="text-2xl font-bold text-blue-600">$10</span>
+                    </div>
+                </div>
+                <div class="border rounded-lg p-4 cursor-pointer hover:border-blue-600 transition-colors">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h4 class="font-semibold text-gray-900">50 Credits</h4>
+                            <p class="text-gray-600">Most popular</p>
+                        </div>
+                        <span class="text-2xl font-bold text-blue-600">$40</span>
+                    </div>
+                </div>
+            </div>
+            <div class="space-y-4">
+                <button onclick="processPurchase()" class="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    Purchase Credits
+                </button>
+                <button onclick="hideBuyCreditsModal()" class="w-full px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const editControls = document.getElementById('editControls');
+        const preview = document.getElementById('preview');
+        const previewPlaceholder = document.getElementById('previewPlaceholder');
+        const brightnessSlider = document.getElementById('brightness');
+        const contrastSlider = document.getElementById('contrast');
+        const saturationSlider = document.getElementById('saturation');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const dimensionsDiv = document.getElementById('dimensions');
+        const originalDimensionsSpan = document.getElementById('originalDimensions');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const creditBalance = document.getElementById('creditBalance');
+
+        // Value display elements
+        const brightnessValue = document.getElementById('brightnessValue');
+        const contrastValue = document.getElementById('contrastValue');
+        const saturationValue = document.getElementById('saturationValue');
+
+        // Initialize credit balance (in a real app, this would come from a backend)
+        let credits = 5;
+        updateCreditDisplay();
+
+        function updateCreditDisplay() {
+            creditBalance.textContent = credits;
+        }
+
+        // Drag and Drop
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('dragover');
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                if (file.size <= 10 * 1024 * 1024) { // 10MB limit
+                    handleImage(file);
+                } else {
+                    alert('File size exceeds 10MB limit');
+                }
+            } else {
+                alert('Please upload an image file');
+            }
+        });
+
+        dropzone.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size <= 10 * 1024 * 1024) { // 10MB limit
+                    handleImage(file);
+                } else {
+                    alert('File size exceeds 10MB limit');
+                }
+            }
+        });
+
+        // Handle Image Upload
+        function handleImage(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.src = e.target.result;
+                preview.onload = () => {
+                    preview.classList.remove('hidden');
+                    previewPlaceholder.classList.add('hidden');
+                    editControls.classList.remove('hidden');
+                    dimensionsDiv.classList.remove('hidden');
+                    originalDimensionsSpan.textContent = `${preview.naturalWidth}px × ${preview.naturalHeight}px`;
+                    
+                    // Animate the preview
+                    gsap.from(preview, {
+                        duration: 0.5,
+                        opacity: 0,
+                        scale: 0.95,
+                        ease: "power2.out"
+                    });
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Image Adjustments
+        function updateImage() {
+            const brightness = brightnessSlider.value;
+            const contrast = contrastSlider.value;
+            const saturation = saturationSlider.value;
+            
+            brightnessValue.textContent = brightness + '%';
+            contrastValue.textContent = contrast + '%';
+            saturationValue.textContent = saturation + '%';
+            
+            preview.style.filter = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`;
+        }
+
+        brightnessSlider.addEventListener('input', updateImage);
+        contrastSlider.addEventListener('input', updateImage);
+        saturationSlider.addEventListener('input', updateImage);
+
+        // Reset Adjustments
+        function resetAdjustments() {
+            brightnessSlider.value = 100;
+            contrastSlider.value = 100;
+            saturationSlider.value = 100;
+            updateImage();
+        }
+
+        // Platform Presets
+        const presets = {
+            'instagram-post': { width: 1080, height: 1080, label: 'Instagram Post' },
+            'instagram-story': { width: 1080, height: 1920, label: 'Instagram Story' },
+            'facebook-post': { width: 1200, height: 630, label: 'Facebook Post' },
+            'linkedin-post': { width: 1200, height: 627, label: 'LinkedIn Post' }
+        };
+
+        function applyPreset(platform) {
+            const preset = presets[platform];
+            if (preset) {
+                const container = document.getElementById('previewContainer');
+                container.style.aspectRatio = `${preset.width}/${preset.height}`;
+                
+                // Update active state of buttons
+                document.querySelectorAll('.feature-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                event.currentTarget.classList.add('active');
+            }
+        }
+
+        // Premium Features
+        function showPremiumFeature(feature) {
+            const requiredCredits = feature === '3d' ? 2 : 1;
+            if (credits >= requiredCredits) {
+                // Show loading overlay
+                loadingOverlay.classList.remove('hidden');
+                
+                // Simulate processing
+                setTimeout(() => {
+                    credits -= requiredCredits;
+                    updateCreditDisplay();
+                    loadingOverlay.classList.add('hidden');
+                    
+                    // Apply effect (in a real app, this would actually process the image)
+                    if (feature === 'background') {
+                        preview.style.filter += ' grayscale(50%)';
+                    } else if (feature === '3d') {
+                        preview.style.transform = 'perspective(1000px) rotateY(10deg)';
+                    }
+                }, 2000);
+            } else {
+                document.getElementById('premiumFeatureModal').classList.remove('hidden');
+            }
+        }
+
+        function hidePremiumFeatureModal() {
+            document.getElementById('premiumFeatureModal').classList.add('hidden');
+        }
+
+        function showBuyCredits() {
+            hidePremiumFeatureModal();
+            document.getElementById('buyCreditsModal').classList.remove('hidden');
+        }
+
+        function hideBuyCreditsModal() {
+            document.getElementById('buyCreditsModal').classList.add('hidden');
+        }
+
+        function processPurchase() {
+            // Simulate purchase (in a real app, this would integrate with a payment gateway)
+            credits += 10;
+            updateCreditDisplay();
+            hideBuyCreditsModal();
+        }
+
+        // Download Image
+        downloadBtn.addEventListener('click', () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas dimensions
+            canvas.width = preview.naturalWidth;
+            canvas.height = preview.naturalHeight;
+            
+            // Apply filters
+            ctx.filter = preview.style.filter;
+            
+            // Draw image
+            ctx.drawImage(preview, 0, 0, canvas.width, canvas.height);
+            
+            // Create download link
+            const link = document.createElement('a');
+            link.download = 'optimized-image.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+
+        // Add animations for UI elements
+        document.addEventListener('DOMContentLoaded', () => {
+            // Animate feature buttons on hover
+            document.querySelectorAll('.feature-btn').forEach(btn => {
+                btn.addEventListener('mouseenter', () => {
+                    gsap.to(btn, {
+                        duration: 0.2,
+                        y: -2,
+                        ease: "power2.out"
+                    });
+                });
+                
+                btn.addEventListener('mouseleave', () => {
+                    gsap.to(btn, {
+                        duration: 0.2,
+                        y: 0,
+                        ease: "power2.out"
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>
